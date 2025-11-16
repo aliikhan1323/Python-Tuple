@@ -3,23 +3,36 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: '*/1 * * * *'  # Every minute
+    - cron: '*/1 * * * *'  # Every minute (GitHub limit)
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  update:
+  flip:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update timestamp
+      - name: Add random letter
         run: |
-          echo "Last updated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > timestamp.txt
+          LETTER=$(shuf -n 1 -e a b c d e f g h i j k l m n o p q r s t u v w x y z)
+          echo "$LETTER" >> timestamp.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add timestamp.txt
-          git commit -m "chore: ping $(date +%s)" || exit 0
+          git add marker.txt
+          git commit -m "add: $LETTER" || exit 0
           git push
+          echo "ADDED: $LETTER"
+
+      - name: Wait 5 seconds
+        run: sleep 5
+
+      - name: Remove last letter
+        run: |
+          sed -i '$ d' timestamp.txt
+          git add marker.txt
+          git commit -m "remove: last letter" || exit 0
+          git push
+          echo "REMOVED last line"
