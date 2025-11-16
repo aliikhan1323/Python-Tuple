@@ -1,52 +1,26 @@
 # .github/workflows/update.yml
-name: Infinite Keep Alive
+name: Keep Alive
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '*/1 * * * *'  # Backup every minute
+    - cron: '*/1 * * * *'  # Every minute
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  loop:
+  update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # === STEP 1: Add random letter ===
-      - name: Add random letter
-        id: add
+      - name: Update timestamp (no file change needed)
         run: |
-          LETTER=$(shuf -n 1 -e x o z a b c d e f)
-          echo "$LETTER" >> marker.txt
+          TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          echo "$TIMESTAMP" > timestamp.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add marker.txt
-          git commit -m "add: $LETTER" || exit 0
+          git add timestamp.txt
+          git commit -m "update: $TIMESTAMP" || exit 0
           git push
-          echo "letter=$LETTER" >> $GITHUB_OUTPUT
-
-      # === STEP 2: Wait 5 seconds ===
-      - name: Wait 5 seconds
-        run: sleep 5
-
-      # === STEP 3: Remove last letter ===
-      - name: Remove last letter
-        run: |
-          sed -i '$ d' marker.txt
-          git add marker.txt
-          git commit -m "remove: last letter" || exit 0
-          git push
-
-      # === STEP 4: Wait 5 seconds ===
-      - name: Wait 5 seconds again
-        run: sleep 5
-
-      # === STEP 5: Repeat forever (re-run workflow) ===
-      - name: Retrigger self
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Infinite Keep Alive
-          ref: main
