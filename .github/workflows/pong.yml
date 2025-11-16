@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # ← REQUIRED
 
 jobs:
   pong:
@@ -17,7 +18,7 @@ jobs:
 
       - name: Update marker
         run: |
-          echo "PONG: $(date -u +'%H:%M:%S')" >> marker.txt
+          echo "PONG: $(date -u +'%Y-%m-%d %H:%M:%S')" >> marker.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add marker.txt
@@ -30,4 +31,5 @@ jobs:
       - name: Trigger Ping
         uses: peter-evans/repository-dispatch@v3
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           event-type: start-ping
