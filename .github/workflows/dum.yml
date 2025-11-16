@@ -4,7 +4,7 @@ name: Keep Alive
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'  # Backup every hour
+    - cron: '0 * * * *'
 
 permissions:
   contents: write
@@ -16,6 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Get default branch
+        id: branch
+        run: |
+          echo "branch=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')" >> $GITHUB_OUTPUT
+
       - name: Update README
         run: |
           echo "" >> README.md
@@ -25,10 +30,10 @@ jobs:
           git commit -m "chore: keep alive" || exit 0
           git push
 
-      - name: Retrigger in ~30 sec
+      - name: Retrigger
         if: success()
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Keep Alive
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main
+          ref: ${{ steps.branch.outputs.branch }}
