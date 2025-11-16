@@ -1,10 +1,10 @@
 # .github/workflows/update.yml
-name: Keep Alive
+name: Infinite Keep Alive
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [start-loop]
+  schedule:
+    - cron: '*/1 * * * *'  # Backup every minute
 
 permissions:
   contents: write
@@ -15,20 +15,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Flip marker
+      # === STEP 1: Add random letter ===
+      - name: Add random letter
+        id: add
         run: |
-          if grep -q "FLIP" marker.txt 2>/dev/null; then
-            sed -i 's/FLIP.*/FLIP: $(shuf -n1 -e x o z a b c)/' marker.txt
-          else
-            echo "FLIP: $(shuf -n1 -e x o z a b c)" >> marker.txt
-          fi
+          LETTER=$(shuf -n 1 -e x o z a b c d e f)
+          echo "$LETTER" >> marker.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add marker.txt
-          git commit -m "flip $(date +%s)" || exit 0
+          git commit -m "add: $LETTER" || exit 0
+          git push
+          echo "letter=$LETTER" >> $GITHUB_OUTPUT
+
+      # === STEP 2: Wait 5 seconds ===
+      - name: Wait 5 seconds
+        run: sleep 5
+
+      # === STEP 3: Remove last letter ===
+      - name: Remove last letter
+        run: |
+          sed -i '$ d' marker.txt
+          git add marker.txt
+          git commit -m "remove: last letter" || exit 0
           git push
 
-      - name: Loop forever (trigger ping)
-        uses: peter-evans/repository-dispatch@v3
+      # === STEP 4: Wait 5 seconds ===
+      - name: Wait 5 seconds again
+        run: sleep 5
+
+      # === STEP 5: Repeat forever (re-run workflow) ===
+      - name: Retrigger self
+        uses: benc-uk/workflow-dispatch@v1
         with:
-          event-type: ping
+          workflow: Infinite Keep Alive
+          ref: main
