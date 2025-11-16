@@ -2,37 +2,33 @@
 name: Keep Alive
 
 on:
-  schedule:
-    - cron: '*/1 * * * *'  # Every minute (GitHub limit)
   workflow_dispatch:
+  repository_dispatch:
+    types: [start-loop]
 
 permissions:
   contents: write
 
 jobs:
-  flip:
+  loop:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Add random letter
+      - name: Flip marker
         run: |
-          LETTER=$(shuf -n 1 -e a b c d e f g h i j k l m n o p q r s t u v w x y z)
-          echo "$LETTER" >> timestamp.txt
+          if grep -q "FLIP" marker.txt 2>/dev/null; then
+            sed -i 's/FLIP.*/FLIP: $(shuf -n1 -e x o z a b c)/' marker.txt
+          else
+            echo "FLIP: $(shuf -n1 -e x o z a b c)" >> marker.txt
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add marker.txt
-          git commit -m "add: $LETTER" || exit 0
+          git commit -m "flip $(date +%s)" || exit 0
           git push
-          echo "ADDED: $LETTER"
 
-      - name: Wait 5 seconds
-        run: sleep 5
-
-      - name: Remove last letter
-        run: |
-          sed -i '$ d' timestamp.txt
-          git add marker.txt
-          git commit -m "remove: last letter" || exit 0
-          git push
-          echo "REMOVED last line"
+      - name: Loop forever (trigger ping)
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: ping
