@@ -24,6 +24,9 @@ jobs:
           git commit -m "ping $(date +%s)" || exit 0
           git push
 
+      - name: Wait 1 second
+        run: sleep 1
+
       - name: Trigger Pong
         uses: peter-evans/repository-dispatch@v3
         with:
