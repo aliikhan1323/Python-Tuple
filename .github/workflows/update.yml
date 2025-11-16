@@ -2,13 +2,12 @@
 name: Keep Alive
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '* * * * *'  # Every minute (backup)
+    - cron: '*/1 * * * *'  # Every minute
+  workflow_dispatch:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   update:
@@ -18,16 +17,9 @@ jobs:
 
       - name: Update timestamp
         run: |
-          echo "Last updated: $(date -u)" > timestamp.txt
+          echo "Last updated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > timestamp.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add timestamp.txt
-          git commit -m "chore: update timestamp" || exit 0
+          git commit -m "chore: ping $(date +%s)" || exit 0
           git push
-
-      - name: Retrigger immediately
-        if: success()
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: ping
