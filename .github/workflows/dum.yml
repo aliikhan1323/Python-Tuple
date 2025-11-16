@@ -4,7 +4,7 @@ name: Keep Alive
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '* * * * *'  # Every minute (backup)
 
 permissions:
   contents: write
@@ -16,24 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get default branch
-        id: branch
+      - name: Update timestamp
         run: |
-          echo "branch=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')" >> $GITHUB_OUTPUT
-
-      - name: Update README
-        run: |
-          echo "" >> README.md
+          echo "Last updated: $(date -u)" > timestamp.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: keep alive" || exit 0
+          git add timestamp.txt
+          git commit -m "chore: update timestamp" || exit 0
           git push
 
-      - name: Retrigger
+      - name: Retrigger immediately
         if: success()
-        uses: benc-uk/workflow-dispatch@v1
+        uses: peter-evans/repository-dispatch@v3
         with:
-          workflow: Keep Alive
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ steps.branch.outputs.branch }}
+          event-type: ping
