@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  actions: write  # ← REQUIRED FOR DISPATCH
+  actions: write  # ← FIXED: Enables dispatch
 
 jobs:
   ping:
