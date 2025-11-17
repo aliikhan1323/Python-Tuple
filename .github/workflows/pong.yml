@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  actions: write  # ← REQUIRED
+  actions: write  # ← FIXED: Enables dispatch
 
 jobs:
   pong:
